@@ -53,7 +53,7 @@ from keras.callbacks import History
     TOYembedding_matrix=data['embedding_matrix']
         
 #Model:      
-    TOYmodel=BuildModel(maxlen=6, EDIM=300, nunits=64, embedding_matrix=TOYembedding_matrix)
+    TOYmodel=BuildModel(maxlen=6, EDIM=300, n_units=64, embedding_matrix=TOYembedding_matrix)
   
   
 # train
