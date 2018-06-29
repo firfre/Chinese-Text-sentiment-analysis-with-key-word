@@ -79,8 +79,7 @@ if __name__ == '__main__':
               batch_size=256, epochs=10, 
               validation_data=(x_val, y_val))
    
-   # save weights for transfer study (optional)
-   MYmodel.save_weights('MYmodel_weights.h5')
+   
    
    
     #4. validation
