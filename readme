@@ -1,0 +1,81 @@
+
+Test in spider python 3.6, Keras 2.2.0.
+Make sure the Keras.backend from Theano, the default is Tensorflow, can be switched manually. (See Keras Document: https://keras.io/backend/)
+
+I tried stopword list from “中科院停用词表”， ”哈工大停用词表“， the results do not have better performance than not using. I think these stop words doesn’t fit the reviews from online shopping, since the length of reviews is short. Thus, I clear the stopword list at this point, can be added if needed.
+
+“Filter pattern” can be customized in first stage.(PreDoc)
+
+
+Toy Example:
+
+Attached includes a pickle file TOYData.pickle prepared with a toy sample, 2000 samples, including clean data, embedding matrix.
+By loading TOYData in ‘A Toy Example.py’, clean data, embedding matrix will be ready to process the model built-up, training, and prediction.
+Following are the TOYmodel summary, a simple training process, and prediction with key words result:
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+input_21 (InputLayer)        (None, 6)                 0         
+_________________________________________________________________
+embedding_18 (Embedding)     (None, 6, 300)            809400    
+_________________________________________________________________
+bidirectional_14 (Bidirectio (None, 6, 128)            140160    
+_________________________________________________________________
+attention_19 (Attention)     (None, 128)               134       
+_________________________________________________________________
+dense_10 (Dense)             (None, 2)                 258       
+=================================================================
+Total params: 949,952
+Trainable params: 140,552
+Non-trainable params: 809,400
+_________________________________________________________________
+None
+Train on 1400 samples, validate on 600 samples
+Epoch 1/1
+1400/1400 [==============================] - 474s 339ms/step - loss: 0.6315 - acc: 0.6779 - val_loss: 0.5017 - val_acc: 0.8117
+
+(0 : neg; 1: pos)
+
+   0         1
+0  1      [, ]
+1  1    [品牌, ]
+2  0  [色彩, 鲜明]
+3  0   [电池, 不]
+4  1      [, ]
+5  0  [暂时, 没有]
+6  1  [不错, 快捷]
+7  1   [很, 不错]
+8  0   [长, 还要]
+9  0   [感觉, 元]
+
+
+
+MYmodel:
+MYData.pickle prepared with all the sample data, corresponding MYmodel trained with 30000 training sample, the training weights has been saved in  MYmodel_weights.h5, can be loaded in the model and continue training.
+The acc rate and val rate of MYmodel achieve around 0.9.
+
+MYmodel=BuildModel(maxlen=6, EDIM=300, nunits=64, embedding_matrix=embedding_matrix)
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+input_23 (InputLayer)        (None, 6)                 0         
+_________________________________________________________________
+embedding_20 (Embedding)     (None, 6, 300)            13199700  
+_________________________________________________________________
+bidirectional_15 (Bidirectio (None, 6, 128)            140160    
+_________________________________________________________________
+attention_20 (Attention)     (None, 128)               134       
+_________________________________________________________________
+dense_11 (Dense)             (None, 2)                 258       
+=================================================================
+Total params: 13,340,252
+Trainable params: 140,552
+Non-trainable params: 13,199,700
+_________________________________________________________________
+None
+
+
+
+
+
+
