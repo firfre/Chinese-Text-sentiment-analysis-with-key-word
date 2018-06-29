@@ -152,7 +152,7 @@ class Attention(Layer):
         else:
             return input_shape[0], input_shape[-1]
         
-def BuildModel(maxlen, EDIM, nunits,embedding_matrix):
+def BuildModel(maxlen, EDIM, n_units,embedding_matrix):
     sequence_input = Input(shape=(maxlen,), dtype='int32')
     embedded_sequences = Embedding(len(word2index.index) + 1, EDIM,
                                    weights=[embedding_matrix],mask_zero=False,
