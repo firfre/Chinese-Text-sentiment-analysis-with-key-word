@@ -67,7 +67,7 @@ if __name__ == '__main__':
     
     #2. Construct Model 
     
-   MYmodel=BuildModel(maxlen=6, EDIM=300, nunits=64, embedding_matrix=embedding_matrix)
+   MYmodel=BuildModel(maxlen=6, EDIM=300, n_units=64, embedding_matrix=embedding_matrix)
   
     
     #3. train
