@@ -1,13 +1,118 @@
 
-Test in spider python 3.6, Keras 2.2.0.
+Requirement:spider python 3.6, Keras 2.2.0.
 Make sure the Keras.backend from Theano, the default is Tensorflow, can be switched manually. (See Keras Document: https://keras.io/backend/)
 
-I tried stopword list from “中科院停用词表”， ”哈工大停用词表“， the results do not have better performance than not using. I think these stop words doesn’t fit the reviews from online shopping, since the length of reviews is short. Thus, I clear the stopword list at this point, can be added if needed.
+Acknowlegement:
 
-“Filter pattern” can be customized in first stage.(PreDoc)
+1. In this project, pertained wordvectors which apply Chinese Wikipedia corpus is used to assign the word-embedding matrix. [reference: https://github.com/Embedding/Chinese-Word-Vectors] "Analogical Reasoning on Chinese Morphological and Semantic Relations".
+
+2. This project follows Yang et al. [reference:https://www.cs.cmu.edu/~diyiy/docs/naacl16.pdf] "Hierarchical Attention Networks for Document Classification".
 
 
-Toy Example:
+Process:
+
+1. Initialization
+(1) Reading Data/ Clean Text/ Tokenize
+Some issues:
+a.The data is unbalanced between neg and pos, the ratio is around 1:1.5;
+b.The missing values which labeled as "na" in "neg" are almost 1/3 of the whole data set, and not missing value in "pos" class, thus, the distribution of missing value is not random. Further investigated is needed.
+If the data collection is reliable, one possible solution to treat the nonrandom missing value is to imputation.
+
+For time reason, these issues are ignored in this project, missing value is deleted roughly in this project.
+
+
+(2) Build Embedding Matrix;
+(3) Transform reviews to word sequence;
+ 
+  Investigate the length of Review Sequence after tokenized.
+  By quantile analysis, 70% reviews sequence are less than 6.
+  To avoid the data are too sparse, choose the maximum sequence length as 6.
+
+
+    For basic dimension reduction, two ways can be applied to restrict the word into dictionary,
+    one is to restrict the word which is appeared less than some frequency, 
+    the other is to set a maximum length of the dictionary.
+   e.g. #word2index = word2index[word2index >= 5]  
+        #word2index=word2index[:max(len(word2index) , maxvocab)]
+
+
+2: Model
+
+
+"""
+ (1) make sure use theano based BACKEND
+"""
+
+"""
+below are three methods to solve it
+"""
+
+os.environ['KERAS_BACKEND'] = 'theano'
+
+
+def set_keras_backend(backend):
+
+    if K.backend() != backend:
+        os.environ['KERAS_BACKEND'] = backend
+        importlib.reload(K)
+        assert K.backend() == backend
+
+set_keras_backend("theano")
+
+
+def dot_product(x, kernel):
+    """
+    Wrapper for dot product operation, in order to be compatible with both
+    Theano and Tensorflow
+    Args:
+        x (): input
+        kernel (): weights
+    Returns:
+    """
+    if K.backend() == 'tensorflow':
+        return K.squeeze(K.dot(x, K.expand_dims(kernel)), axis=-1)
+    else:
+        return K.dot(x, kernel)
+
+(2)Attention Mechanism
+In order to capture the informations from whole networks, serveral Attention mechanisms are studied in deep learning.
+Below are two Attention Layer customized in Keras.
+The work of Raffel et al. [https://arxiv.org/abs/1512.08756] implements an Attention mechanism for temporal data.(Attention)
+The work of Yang et al. [https://www.cs.cmu.edu/~diyiy/docs/naacl16.pdf] "Hierarchical Attention Networks for Document Classification" use a context vector to assist the attention. (AttentionHAN)
+source code:https://gist.github.com/cbaziotis
+
+(3) Build Sequential Model      
+       sequence_input = Input(shape=(maxlen,), dtype='int32')
+       embedded_sequences = Embedding(len(word2index.index) + 1, EDIM,
+                            weights=[embedding_matrix],mask_zero=False,
+                            input_length=maxlen,trainable=False)(sequence_input)
+       gru = Bidirectional(GRU(100,return_sequences=True))(embedded_sequences)
+       Attention = Attention()(gru)
+       dense = Dense(1, activation='softmax')(Attention)
+       model = Model(sequence_input, dense)
+       model.compile('adam', 'binary_crossentropy', metrics=['accuracy'])
+       
+       model.summary()
+       
+
+
+3. Train
+
+# Get Training Samples
+model.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=10, batch_size=256)
+       
+ 
+4. Predict:
+To compute the attention weights, need to get GRU and Attention layers out, then calculate attention weights by formula:
+np.exp(np.tanh(np.dot(out[i], out2[i])))/np.sum(np.exp(np.tanh(np.dot(out[i], out2[i])))).
+
+
+5. Final Thought:  apply dropout and mask might achive better result. “Filter pattern” can be customized in first stage.(PreDoc)
+
+
+Experiments:
+
+(1)Toy Example:
 
 Attached includes a pickle file TOYData.pickle prepared with a toy sample, 2000 samples, including clean data, embedding matrix.
 By loading TOYData in ‘A Toy Example.py’, clean data, embedding matrix will be ready to process the model built-up, training, and prediction.
@@ -50,7 +155,7 @@ Epoch 1/1
 
 
 
-MYmodel:
+(2)MYmodel:
 MYData.pickle prepared with all the sample data, corresponding MYmodel trained with 30000 training sample, the training weights has been saved in  MYmodel_weights.h5, can be loaded in the model and continue training.
 The acc rate and val rate of MYmodel achieve around 0.9.
 
